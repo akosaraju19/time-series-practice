@@ -1,0 +1,68 @@
+# read csv dataset
+traffic = read.csv("/Users/akosaraju/Desktop/UWaterloo/Classes/STAT/STAT\ 371/traffic.csv")
+attach(traffic)
+
+
+# traffic times series contains the number of vehicles passing a certain intersection in a city from 7:00am to
+# 8:00am each day for 608 consecutive days
+
+# Define the index function
+Index <- c(1: length(Traffic))
+# Define the Traffic function 
+Traffic <- traffic$Traffic
+# Plot time series using Index and Traffic 
+plot.ts(Index, Traffic, xy.lines = TRUE, main = "Time Series Plot")
+# Comment: variance is increasing, see issues with heteroskedasticity
+
+# Perform a log transformation to stabilize variance
+
+# Define the log transformation of Traffic function 
+Traffic_log <- log(traffic$Traffic)
+# Define the Index function using Traffic_log
+Index <- c(1:length(Traffic_log))
+# Plot the time series using Index and Traffic_log
+plot.ts(Index, Traffic_log, xy.lines = TRUE, main = "Time Series Plot with Log Transformation")
+# variance is seen to be more stable 
+
+# Fit a linear regression model with a quadratic term to account for the observed (non-linear) trend
+
+Index_squared <- Index^2
+# Fit model with quadratic term
+lin_reg_model <- lm(Traffic_log ~ Index + Index_squared)
+# Show model summary
+summary(lin_reg_model)
+
+# Create a correlogram of the residuals. Ignoring the acf at lag 0
+# get the residuals
+residuals <- residuals(lin_reg_model)
+# Create the correlogram of the residuals
+acf_plot <- acf(residuals, main = "Correlogram (ACF) of Residuals")
+
+# Add the Day variate to the log model to address the large autocorrelations observed in the correlogram and plot the acf of residuals
+
+# Defining the Day variate
+traffic$Day <- factor(traffic$Day, levels = c("Mon","Tue","Wed","Thu","Fri","Sat","Sun"))
+# Add linear regression model with Day
+lin_reg_model_2 <- lm(Traffic_log ~ Index + Index_squared + Day, data = traffic)
+# Show model summary
+summary(lin_reg_model_2)
+# Get the residuals 
+residuals_2 <- residuals(lin_reg_model_2)
+# Plot the ACF of residuals
+acf_plot <- acf(residuals_2, main = "ACF of Residuals")
+
+# Even after accounting for trend and day, the time of year and season may be associated with traffic patterns
+# Add the Month variate to the log model to address the large autocorrelations observed in the correlogram and plot 
+
+# Defining the Month variate
+traffic$Month <- factor(traffic$Month, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+# Add linear regression model with Month
+lin_reg_model_3 <- lm(Traffic_log ~ Index + Index_squared + Day + Month, data = traffic)
+# Show model summary
+summary(lin_reg_model_3)
+# get the residuals
+residuals <- residuals(lin_reg_model_3)
+# Create the correlogram of the residuals 
+acf_plot <- acf(residuals, main = "Correlogram(ACF) of Residuals")
+
+
